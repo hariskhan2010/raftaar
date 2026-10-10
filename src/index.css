@@ -34,9 +34,16 @@
   -webkit-font-smoothing: antialiased;
 }
 
-:root[dir='rtl'] {
+/* Urdu is read in Nastaliq; Arabic uses Segoe UI's naskh, Hindi uses Nirmala UI (both ship with Windows). */
+:root[lang='ur'] {
   font-family: 'Noto Nastaliq Urdu', 'Segoe UI', system-ui, sans-serif;
   line-height: 2;
+}
+:root[lang='hi'] {
+  font-family: 'Nirmala UI', 'Segoe UI', system-ui, sans-serif;
+}
+:root[lang='ar'] {
+  line-height: 1.7;
 }
 
 * {

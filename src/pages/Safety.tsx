@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { History, LifeBuoy, ShieldCheck, ShieldOff, Undo2 } from 'lucide-react'
 import { api, type RestorePoint } from '../api'
-import { errText, formatDate, useT } from '../i18n'
+import { errText, formatDate, tweakName, useT } from '../i18n'
 import { useApp } from '../store'
 import { PageHead } from '../components/ui'
 
@@ -75,7 +75,7 @@ export function Safety() {
             {applied.map((tw) => (
               <div className="list-row" key={tw.id}>
                 <div className="grow">
-                  <strong>{lang === 'ur' ? tw.name_ur : tw.name_en}</strong>
+                  <strong>{tweakName(tw, lang)}</strong>
                   <div className="muted small">
                     {t.categories[tw.category]}
                     {tw.applied_at && ` · ${t.appliedOn(formatDate(tw.applied_at, lang))}`}

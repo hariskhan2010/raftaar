@@ -638,6 +638,17 @@ mod tests {
     }
 
     #[test]
+    fn every_tweak_is_translated_in_the_ui() {
+        // English and Urdu live here; the other languages live in the UI.
+        const LANGS: usize = 5; // es, pt, tr, hi, ar
+        let ui = include_str!("../../src/i18n/tweaks.ts");
+        for t in catalog() {
+            let n = ui.matches(&format!("\n  {}: [", t.id)).count();
+            assert_eq!(n, LANGS, "{} is translated in {n} of {LANGS} languages in src/i18n/tweaks.ts", t.id);
+        }
+    }
+
+    #[test]
     fn presets_are_cumulative() {
         for class in [PcClass::Low, PcClass::Mid, PcClass::High] {
             let lite = preset_ids(Preset::Lite, class);

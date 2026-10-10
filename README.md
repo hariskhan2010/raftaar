@@ -42,6 +42,25 @@ npm run tauri dev         # dev app (not elevated; system tweaks, FPS Test and r
 npm run tauri build       # NSIS installer -> E:/raftaar-target/release/bundle/nsis
 ```
 
+## Languages
+
+English, Urdu, Hindi, Arabic, Spanish, Portuguese (BR) and Turkish. UI strings live in
+`src/i18n/<lang>.ts` (TypeScript makes every language define every string). Tweak names:
+English and Urdu in `engine/src/catalog.rs`, the rest in `src/i18n/tweaks.ts`; a Rust test
+fails if a tweak is missing from any language. First run picks the Windows display language.
+
+## Releasing an update
+
+Installed copies check `https://github.com/hariskhan2010/raftaar/releases/latest/download/latest.json`
+on start and offer the update; installs are verified against the public key in `tauri.conf.json`.
+
+1. Bump `version` in `package.json` and `src-tauri/tauri.conf.json`.
+2. `.\scripts\release.ps1 -Notes "What changed"` builds a signed installer and `latest.json`.
+3. Create a GitHub release `v<version>` and upload both files.
+
+The private signing key is `%USERPROFILE%\.tauri\raftaar-updater.key`. Back it up somewhere safe
+and never commit it: without it, existing installs cannot receive updates.
+
 ## Testing real tweaks
 
 Never test writes on your own PC first. Use Windows Sandbox:

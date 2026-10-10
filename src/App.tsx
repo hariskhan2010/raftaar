@@ -14,7 +14,8 @@ import {
   Zap,
 } from 'lucide-react'
 import { api, type ApplyResult, type RestoreResult, type SystemInfo, type TweakView } from './api'
-import { LangContext, errText, strings, type Lang } from './i18n'
+import { LangContext, detectLang, errText, isRtl, strings, type Lang } from './i18n'
+import { UpdateBanner } from './components/UpdateBanner'
 import { AppContext, type Page } from './store'
 import { RestoreModal, type RestoreChoice } from './RestoreModal'
 import { TitleBar } from './components/TitleBar'
@@ -31,10 +32,12 @@ type BoostEvent = { type: 'Started' | 'Ended'; game: string; closed?: number; re
 
 function initialLang(): Lang {
   try {
-    return localStorage.getItem('raftaar-lang') === 'ur' ? 'ur' : 'en'
+    const saved = localStorage.getItem('raftaar-lang') as Lang | null
+    if (saved && saved in strings) return saved
   } catch {
-    return 'en'
+    /* storage unavailable */
   }
+  return detectLang(navigator.languages ?? [navigator.language])
 }
 
 const NAV: { id: Page; icon: typeof HomeIcon }[] = [
@@ -65,7 +68,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.lang = lang
-    document.documentElement.dir = lang === 'ur' ? 'rtl' : 'ltr'
+    document.documentElement.dir = isRtl(lang) ? 'rtl' : 'ltr'
     try {
       localStorage.setItem('raftaar-lang', lang)
     } catch {
@@ -202,6 +205,7 @@ export default function App() {
           </aside>
           <main className="main" ref={mainRef}>
             <div className="page" key={page}>
+              <UpdateBanner />
               {!admin && page !== 'settings' && (
                 <div className="banner warn" role="note">
                   {t.notAdmin}

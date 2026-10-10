@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Copy, Download, Search } from 'lucide-react'
 import { api, decodeShareCode, encodeShareCode, type Category, type Preset, type TweakView } from '../api'
-import { errText, useT } from '../i18n'
+import { errText, tweakDesc, tweakName, useT } from '../i18n'
 import { useApp } from '../store'
 import { CATEGORY_ICON } from '../components/icons'
 import { PageHead, Toggle } from '../components/ui'
@@ -16,17 +16,17 @@ export function Optimize() {
   const [busy, setBusy] = useState<string | null>(null)
   const [code, setCode] = useState('')
 
-  const name = (tw: TweakView) => (lang === 'ur' ? tw.name_ur : tw.name_en)
-  const desc = (tw: TweakView) => (lang === 'ur' ? tw.desc_ur : tw.desc_en)
+  const name = (tw: TweakView) => tweakName(tw, lang)
+  const desc = (tw: TweakView) => tweakDesc(tw, lang)
 
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase()
     return tweaks.filter(
       (tw) =>
         (cat === 'all' || tw.category === cat) &&
-        (!needle || `${tw.name_en} ${tw.name_ur} ${tw.desc_en}`.toLowerCase().includes(needle)),
+        (!needle || `${tw.name_en} ${tweakName(tw, lang)} ${tweakDesc(tw, lang)}`.toLowerCase().includes(needle)),
     )
-  }, [tweaks, cat, q])
+  }, [tweaks, cat, q, lang])
 
   const toggle = async (tw: TweakView) => {
     setBusy(tw.id)

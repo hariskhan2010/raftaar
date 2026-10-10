@@ -45,4 +45,5 @@ Not doing, on purpose (safety is the product):
 - 2026-10-10 task 8 done: Tauri commands compile; timer resolution held while a boosted game runs
 - 2026-10-10 task 9 done: new UI (custom title bar, sidebar, 8 pages), 12 UI tests, tsc + eslint clean; screenshots of every page with real data on the dev PC
 - Found by screenshots and fixed: window taller than 768 px screens, FPS Test pre-selected a random background app, Cleanup didn't auto-scan, slow scan on a 23k-file Temp (now per-category in parallel)
+- 2026-10-11 v0.3: auto-update (tauri-plugin-updater 2.12.0, minisign key in %USERPROFILE%\.tauri, GitHub Releases endpoint, scripts/release.ps1) and Hindi, Arabic, Spanish, Portuguese, Turkish (UI + all 26 tweaks; tests enforce completeness). 16 UI tests, 62 engine tests.
 - Not verifiable here: FPS Test end-to-end (needs admin + a running game), Steam/Epic detection on a PC with those launchers (this PC has none), Sandbox E2E

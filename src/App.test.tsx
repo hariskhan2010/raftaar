@@ -3,6 +3,9 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { decodeShareCode, encodeShareCode, type FpsRecord, type SystemInfo, type TweakView } from './api'
 import App from './App'
+import { detectLang } from './i18n'
+import { tweakText } from './i18n/tweaks'
+import { check } from '@tauri-apps/plugin-updater'
 
 const invoke = vi.hoisted(() => vi.fn())
 vi.mock('@tauri-apps/api/core', () => ({ invoke }))
@@ -211,13 +214,62 @@ describe('FPS Test', () => {
 })
 
 describe('Settings', () => {
-  it('urdu switches the whole app to right-to-left', async () => {
+  it('urdu and arabic switch the whole app to right-to-left', async () => {
     render(<App />)
     await nav('Settings')
-    await userEvent.click(screen.getByRole('button', { name: 'اردو' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'اردو' }))
     expect(document.documentElement.dir).toBe('rtl')
+    expect(document.documentElement.lang).toBe('ur')
     expect(screen.getByRole('button', { name: 'ہوم' })).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'English' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'العربية' }))
+    expect(document.documentElement.dir).toBe('rtl')
+    expect(screen.getByRole('button', { name: 'الرئيسية' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('radio', { name: 'English' }))
     expect(document.documentElement.dir).toBe('ltr')
+  })
+
+  it('spanish translates tweak names that come from the engine', async () => {
+    tweaks = [tweak('game_mode')]
+    render(<App />)
+    await nav('Settings')
+    await userEvent.click(screen.getByRole('radio', { name: 'Español' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Optimizar' }))
+    expect(await screen.findByRole('switch', { name: 'Modo Juego de Windows activado' })).toBeInTheDocument()
+  })
+
+  it('checking for updates with no newer release says up to date', async () => {
+    render(<App />)
+    await nav('Settings')
+    await userEvent.click(screen.getByRole('button', { name: 'Check for updates' }))
+    expect(await screen.findByText('Raftaar is up to date.')).toBeInTheDocument()
+  })
+
+  it('a failed update check is reported as a failure, never as up to date', async () => {
+    vi.mocked(check).mockRejectedValueOnce(new Error('404'))
+    render(<App />)
+    await nav('Settings')
+    vi.mocked(check).mockRejectedValueOnce(new Error('404'))
+    await userEvent.click(screen.getByRole('button', { name: 'Check for updates' }))
+    expect(await screen.findByText(/Couldn't check for updates/)).toBeInTheDocument()
+    expect(screen.queryByText('Raftaar is up to date.')).not.toBeInTheDocument()
+  })
+})
+
+describe('languages', () => {
+  it('first run follows the Windows language', () => {
+    expect(detectLang(['tr-TR', 'en-US'])).toBe('tr')
+    expect(detectLang(['pt-BR'])).toBe('pt')
+    expect(detectLang(['fr-FR', 'de-DE'])).toBe('en')
+  })
+
+  it('every translated language covers the same tweaks', () => {
+    const ids = Object.keys(tweakText.es!).sort()
+    expect(ids).toHaveLength(26)
+    for (const [lang, map] of Object.entries(tweakText)) {
+      expect(Object.keys(map!).sort(), lang).toEqual(ids)
+      for (const [id, [name, desc]] of Object.entries(map!)) {
+        expect(name && desc, `${lang}/${id}`).toBeTruthy()
+      }
+    }
   })
 })

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Activity, Cpu, Gamepad2, Rocket, Zap } from 'lucide-react'
 import { api, type ApplyResult, type FpsRecord, type Preset, type Score, type Stats } from '../api'
-import { errText, useT } from '../i18n'
+import { errText, tweakName, useT } from '../i18n'
 import { useApp } from '../store'
 import { Banner, Gauge, Meter, PageHead } from '../components/ui'
 
@@ -62,7 +62,7 @@ export function Home() {
 
   const name = (id: string) => {
     const tw = tweaks.find((x) => x.id === id)
-    return tw ? (lang === 'ur' ? tw.name_ur : tw.name_en) : id
+    return tw ? tweakName(tw, lang) : id
   }
   const restartNeeded = result?.applied.some((id) => tweaks.find((x) => x.id === id)?.needs_restart)
   const shown = after ?? before

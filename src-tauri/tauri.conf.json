@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Raftaar",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "identifier": "com.raftaar.optimizer",
   "build": {
     "frontendDist": "../dist",
@@ -28,16 +28,27 @@
       "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:"
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI1NTZFM0I0ODQ4NDRFQUYKUldTdlRvU0V0T05XdGNsMUkwQURBZUJET0Z0L2FZYWNQaTZFVDRRRTRxVnptWldxbVMxdDFwTGMK",
+      "endpoints": ["https://github.com/hariskhan2010/raftaar/releases/latest/download/latest.json"],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
   "bundle": {
     "active": true,
     "targets": ["nsis"],
+    "createUpdaterArtifacts": true,
     "externalBin": ["binaries/presentmon"],
     "shortDescription": "Safe, honest PC game optimizer",
     "copyright": "Raftaar. PresentMon (c) Intel Corporation, MIT License.",
     "windows": {
       "nsis": {
         "installMode": "perMachine",
-        "languages": ["English"]
+        "languages": ["English", "Arabic", "Spanish", "PortugueseBR", "Turkish"],
+        "displayLanguageSelector": true
       }
     },
     "icon": [

@@ -57,6 +57,7 @@ export function Boost({ onError }: { onError: (msg: string) => void }) {
       {state?.game_name && <div className="banner ok">{t.boostActive(state.game_name)}</div>}
       <ExeList
         title={t.games}
+        placeholder={t.exePlaceholder}
         items={config.games}
         running={running}
         onRefresh={loadRunning}
@@ -64,6 +65,7 @@ export function Boost({ onError }: { onError: (msg: string) => void }) {
       />
       <ExeList
         title={t.closeApps}
+        placeholder={t.closePlaceholder}
         items={config.close_apps}
         running={running}
         onRefresh={loadRunning}
@@ -75,13 +77,14 @@ export function Boost({ onError }: { onError: (msg: string) => void }) {
 
 interface ExeListProps {
   title: string
+  placeholder: string
   items: string[]
   running: string[]
   onRefresh: () => void
   onChange: (items: string[]) => void
 }
 
-function ExeList({ title, items, running, onRefresh, onChange }: ExeListProps) {
+function ExeList({ title, placeholder, items, running, onRefresh, onChange }: ExeListProps) {
   const { t } = useT()
   const [text, setText] = useState('')
 
@@ -117,7 +120,7 @@ function ExeList({ title, items, running, onRefresh, onChange }: ExeListProps) {
           add(text)
         }}
       >
-        <input dir="ltr" value={text} placeholder={t.exePlaceholder} onChange={(e) => setText(e.target.value)} />
+        <input dir="ltr" value={text} placeholder={placeholder} onChange={(e) => setText(e.target.value)} />
         <button className="btn" type="submit">
           {t.addExe}
         </button>

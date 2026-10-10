@@ -138,4 +138,7 @@ Verify: `npm run tauri build` → installer under 15 MB. In Sandbox, `state-diff
 - 2026-10-10 tasks 1-6 done (commit cb30502)
 - 2026-10-10 tasks 7-10 done: `cargo test -p engine` 35 passed. Task 11 command layer builds; no command-level tests (commands are thin pass-throughs to tested engine code).
 - 2026-10-10 task 12 done: `npm test` 6 passed, tsc + eslint clean. Tauri npm packages bumped to 2.12 to match the crate.
-- 2026-10-10 task 13: state-diff.ps1 + sandbox.wsb written, NSIS-only bundle. Sandbox E2E and RAM check still to run by hand.
+- 2026-10-10 task 13: state-diff.ps1 + sandbox.wsb written, NSIS-only bundle (1.56 MB). Windows Sandbox is not installed on the dev PC.
+- 2026-10-10 real run on the dev PC (user installed and pressed Optimize, elevated): all 7 tweaks landed in the registry, the restore-frequency key went back to Missing. Revert All on the real PC not yet run.
+- 2026-10-10 dev app checked by screenshot: all 4 screens + Urdu RTL render with real scan data.
+- 2026-10-10 RAM (release, idle): raftaar.exe 8 MB private + WebView2 121 MB → 94 MB with `--disable-gpu`. Target of 80 MB total is not reachable with WebView2; WebView2's browser+renderer alone are ~60 MB.

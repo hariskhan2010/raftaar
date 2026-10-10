@@ -122,11 +122,10 @@ impl Registry for MockRegistry {
     }
 
     fn set(&self, hive: Hive, path: &str, name: &str, value: &RegValue) -> Result<()> {
-        if let Some(bad) = self.fail_set_on.lock().unwrap().as_deref() {
-            if bad.eq_ignore_ascii_case(name) {
+        if let Some(bad) = self.fail_set_on.lock().unwrap().as_deref()
+            && bad.eq_ignore_ascii_case(name) {
                 return Err(Error(format!("mock: access denied writing {name}")));
             }
-        }
         let mut map = self.values.lock().unwrap();
         match value {
             RegValue::Missing => {

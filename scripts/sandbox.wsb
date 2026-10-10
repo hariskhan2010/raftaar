@@ -1,0 +1,25 @@
+<!--
+  Windows Sandbox for testing Raftaar's real tweaks without touching this PC.
+  1. npm run tauri build
+  2. Double-click this file. The installer and scripts appear on the sandbox desktop.
+  3. In the sandbox (admin PowerShell):
+       cd C:\Users\WDAGUtilityAccount\Desktop\scripts
+       .\state-diff.ps1 -Save before.json
+       install Raftaar from ..\bundle\nsis, scan, Optimize, then Revert All
+       .\state-diff.ps1 -Compare before.json   -> "0 differences"
+  Paths are absolute because .wsb files don't support relative paths.
+-->
+<Configuration>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>D:\game_booster\scripts</HostFolder>
+      <SandboxFolder>C:\Users\WDAGUtilityAccount\Desktop\scripts</SandboxFolder>
+      <ReadOnly>false</ReadOnly>
+    </MappedFolder>
+    <MappedFolder>
+      <HostFolder>E:\raftaar-target\release\bundle</HostFolder>
+      <SandboxFolder>C:\Users\WDAGUtilityAccount\Desktop\bundle</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+</Configuration>

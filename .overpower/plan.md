@@ -135,3 +135,7 @@ Verify: `npm run tauri build` → installer under 15 MB. In Sandbox, `state-diff
 
 ## Log
 - 2026-10-10 spec agreed (Tauri, gamers first then cafe, Free+Premium, EN+UR), plan written: 13 tasks
+- 2026-10-10 tasks 1-6 done (commit cb30502)
+- 2026-10-10 tasks 7-10 done: `cargo test -p engine` 35 passed. Task 11 command layer builds; no command-level tests (commands are thin pass-throughs to tested engine code).
+- 2026-10-10 task 12 done: `npm test` 6 passed, tsc + eslint clean. Tauri npm packages bumped to 2.12 to match the crate.
+- 2026-10-10 task 13: state-diff.ps1 + sandbox.wsb written, NSIS-only bundle. Sandbox E2E and RAM check still to run by hand.

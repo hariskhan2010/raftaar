@@ -1,54 +1,37 @@
-# React + TypeScript + Vite
+# Raftaar
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A safe, honest Windows game optimizer. Every change is snapshotted and can be reverted,
+a System Restore Point is made before the first optimization, and the app shows a
+load score (not invented FPS numbers). English + Urdu.
 
-Currently, two official plugins are available:
+Spec and plan: `.overpower/SPEC.md`, `.overpower/plan.md`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Layout
 
-## Expanding the ESLint configuration
+| Path | What |
+|---|---|
+| `engine/` | Rust library with all system logic (registry, power plans, restore point, scan, score, Game Boost, cleanup). No UI dependency; reused later as the cafe agent. |
+| `engine/src/bin/raftaar-cli.rs` | Debug CLI: `scan`, `score`, `list`, `apply ID`, `revert ID`, `revert-all`, `restore-point` |
+| `src-tauri/` | Thin Tauri command layer (`src/commands.rs`) |
+| `src/` | React UI: Dashboard, Tweaks, Game Boost, Cleanup |
+| `scripts/` | `state-diff.ps1` and `sandbox.wsb` for the end-to-end test |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Rust build output goes to `E:/raftaar-target` (see `.cargo/config.toml`).
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Commands
+
+```
+cargo test -p engine      # engine unit tests (mocked registry/shell)
+npm test                  # UI tests (Vitest)
+npm run tauri dev         # dev app (not elevated; HKLM tweaks fail, a banner says so)
+npm run tauri build       # NSIS installer -> E:/raftaar-target/release/bundle/nsis
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Testing real tweaks
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Never test writes on your own PC first. Use Windows Sandbox:
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+1. `npm run tauri build`
+2. Open `scripts/sandbox.wsb`
+3. In the sandbox: `state-diff.ps1 -Save before.json` → install → Optimize → Revert All →
+   `state-diff.ps1 -Compare before.json` must print `0 differences`.

@@ -18,6 +18,7 @@ pub enum Hive {
 pub enum RegValue {
     Dword(u32),
     Str(String),
+    Binary(Vec<u8>),
     Missing,
 }
 
@@ -25,6 +26,8 @@ pub trait Registry: Send + Sync {
     fn get(&self, hive: Hive, path: &str, name: &str) -> Result<RegValue>;
     /// Writes the value. `RegValue::Missing` deletes it (no error if already absent).
     fn set(&self, hive: Hive, path: &str, name: &str, value: &RegValue) -> Result<()>;
+    /// All values directly under a key, skipping types Raftaar doesn't model. Missing key = empty.
+    fn values(&self, hive: Hive, path: &str) -> Result<Vec<(String, RegValue)>>;
 }
 
 /// The real Windows registry (64-bit view).
@@ -58,8 +61,30 @@ impl Registry for WinRegistry {
         match raw.vtype {
             REG_DWORD => Ok(RegValue::Dword(key.get_value::<u32, _>(name)?)),
             REG_SZ | REG_EXPAND_SZ => Ok(RegValue::Str(key.get_value::<String, _>(name)?)),
+            REG_BINARY => Ok(RegValue::Binary(raw.bytes.into_owned())),
             other => Err(Error(format!("{path}\\{name} has unsupported type {other:?}"))),
         }
+    }
+
+    fn values(&self, hive: Hive, path: &str) -> Result<Vec<(String, RegValue)>> {
+        use winreg::enums::*;
+        let key = match Self::root(hive).open_subkey_with_flags(path, KEY_READ) {
+            Ok(k) => k,
+            Err(e) if e.kind() == ErrorKind::NotFound => return Ok(vec![]),
+            Err(e) => return Err(e.into()),
+        };
+        let mut out = vec![];
+        for item in key.enum_values() {
+            let (name, raw) = item?;
+            let v = match raw.vtype {
+                REG_DWORD => RegValue::Dword(key.get_value::<u32, _>(&name)?),
+                REG_SZ | REG_EXPAND_SZ => RegValue::Str(key.get_value::<String, _>(&name)?),
+                REG_BINARY => RegValue::Binary(raw.bytes.into_owned()),
+                _ => continue,
+            };
+            out.push((name, v));
+        }
+        Ok(out)
     }
 
     fn set(&self, hive: Hive, path: &str, name: &str, value: &RegValue) -> Result<()> {
@@ -83,6 +108,10 @@ impl Registry for WinRegistry {
             RegValue::Str(v) => {
                 let (key, _) = Self::root(hive).create_subkey(path)?;
                 Ok(key.set_value(name, v)?)
+            }
+            RegValue::Binary(bytes) => {
+                let (key, _) = Self::root(hive).create_subkey(path)?;
+                Ok(key.set_raw_value(name, &winreg::RegValue { bytes: bytes.clone().into(), vtype: REG_BINARY })?)
             }
         }
     }
@@ -136,6 +165,20 @@ impl Registry for MockRegistry {
             }
         }
         Ok(())
+    }
+
+    fn values(&self, hive: Hive, path: &str) -> Result<Vec<(String, RegValue)>> {
+        let p = path.to_lowercase();
+        let mut out: Vec<(String, RegValue)> = self
+            .values
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|((h, kp, _), _)| *h == hive && *kp == p)
+            .map(|((_, _, n), v)| (n.clone(), v.clone()))
+            .collect();
+        out.sort_by(|a, b| a.0.cmp(&b.0));
+        Ok(out)
     }
 }
 

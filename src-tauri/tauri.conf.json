@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Raftaar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "com.raftaar.optimizer",
   "build": {
     "frontendDist": "../dist",
@@ -13,10 +13,12 @@
     "windows": [
       {
         "title": "Raftaar",
-        "width": 960,
-        "height": 720,
-        "minWidth": 480,
-        "minHeight": 480,
+        "width": 1180,
+        "height": 700,
+        "minWidth": 940,
+        "minHeight": 560,
+        "center": true,
+        "decorations": false,
         "resizable": true,
         "fullscreen": false,
         "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-gpu"
@@ -29,6 +31,9 @@
   "bundle": {
     "active": true,
     "targets": ["nsis"],
+    "externalBin": ["binaries/presentmon"],
+    "shortDescription": "Safe, honest PC game optimizer",
+    "copyright": "Raftaar. PresentMon (c) Intel Corporation, MIT License.",
     "windows": {
       "nsis": {
         "installMode": "perMachine",

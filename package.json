@@ -14,6 +14,7 @@
   "dependencies": {
     "@fontsource/noto-nastaliq-urdu": "^5.2.5",
     "@tauri-apps/api": "^2.12.2",
+    "lucide-react": "^0.468.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

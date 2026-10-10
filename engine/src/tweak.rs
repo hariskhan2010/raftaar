@@ -6,7 +6,7 @@
 use serde::Serialize;
 
 use crate::power::{self, PowerTarget};
-use crate::snapshot::{Entry, Prior, SnapshotStore};
+use crate::snapshot::{Entry, Prior, SnapshotStore, now_unix};
 use crate::sys::{Hive, RegValue, Registry, Shell};
 use crate::{Error, Result};
 
@@ -21,6 +21,26 @@ pub enum PcClass {
     Low,
     Mid,
     High,
+}
+
+/// Groups tweaks in the UI, like Hone's merged optimization groups.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+pub enum Category {
+    Fps,
+    Power,
+    Background,
+    Privacy,
+    Visuals,
+    Network,
+    Storage,
+}
+
+/// Presets are cumulative: Max includes everything in Balanced, which includes Lite.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, serde::Deserialize)]
+pub enum Preset {
+    Lite,
+    Balanced,
+    Max,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, serde::Deserialize)]
@@ -40,6 +60,7 @@ pub enum TweakKind {
 #[derive(Clone, Debug, Serialize)]
 pub struct Tweak {
     pub id: String,
+    pub category: Category,
     pub name_en: String,
     pub name_ur: String,
     pub desc_en: String,
@@ -48,6 +69,8 @@ pub struct Tweak {
     /// Takes effect only after sign-out or restart.
     pub needs_restart: bool,
     pub recommended_for: Vec<PcClass>,
+    /// The smallest preset that includes this tweak. `None` = only applied by hand (a fix, not a speed-up).
+    pub preset: Option<Preset>,
     pub kind: TweakKind,
 }
 
@@ -75,7 +98,7 @@ impl<'a> Engine<'a> {
             TweakKind::Registry(changes) => self.apply_registry(&tweak.id, changes),
             TweakKind::PowerPlan(target) => {
                 let prior = power::apply(self.shell, *target)?;
-                self.store.push(Entry { tweak_id: tweak.id.clone(), prior })?;
+                self.store.push(Entry { tweak_id: tweak.id.clone(), prior, applied_at: Some(now_unix()) })?;
                 Ok(())
             }
         }
@@ -87,7 +110,11 @@ impl<'a> Engine<'a> {
             let old = self.reg.get(c.hive, &c.path, &c.name)?;
             prior.push(RegChange { value: old, ..c.clone() });
         }
-        self.store.push(Entry { tweak_id: id.to_string(), prior: Prior::Registry(prior.clone()) })?;
+        self.store.push(Entry {
+            tweak_id: id.to_string(),
+            prior: Prior::Registry(prior.clone()),
+            applied_at: Some(now_unix()),
+        })?;
 
         for (i, c) in changes.iter().enumerate() {
             if let Err(e) = self.reg.set(c.hive, &c.path, &c.name, &c.value) {
@@ -134,6 +161,7 @@ mod tests {
     fn tw(id: &str, changes: Vec<(&str, RegValue)>) -> Tweak {
         Tweak {
             id: id.into(),
+            category: Category::Fps,
             name_en: id.into(),
             name_ur: id.into(),
             desc_en: String::new(),
@@ -141,6 +169,7 @@ mod tests {
             risk: Risk::Low,
             needs_restart: false,
             recommended_for: vec![],
+            preset: None,
             kind: TweakKind::Registry(
                 changes
                     .into_iter()

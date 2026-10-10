@@ -15,21 +15,64 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $mm = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile'
+$gcs = 'HKCU:\System\GameConfigStore'
+$cdm = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager'
+$cv = 'HKCU:\Software\Microsoft\Windows\CurrentVersion'
 
 $values = @(
+    # FPS & input lag
     @('HKCU:\Software\Microsoft\GameBar', 'AutoGameModeEnabled'),
     @('HKCU:\Software\Microsoft\GameBar', 'AllowAutoGameMode'),
-    @('HKCU:\System\GameConfigStore', 'GameDVR_Enabled'),
-    @('HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR', 'AppCaptureEnabled'),
+    @($gcs, 'GameDVR_Enabled'),
+    @("$cv\GameDVR", 'AppCaptureEnabled'),
+    @('HKCU:\Control Panel\Mouse', 'MouseSpeed'),
+    @('HKCU:\Control Panel\Mouse', 'MouseThreshold1'),
+    @('HKCU:\Control Panel\Mouse', 'MouseThreshold2'),
     @($mm, 'SystemResponsiveness'),
     @("$mm\Tasks\Games", 'GPU Priority'),
     @("$mm\Tasks\Games", 'Priority'),
     @("$mm\Tasks\Games", 'Scheduling Category'),
-    @('HKCU:\Control Panel\Mouse', 'MouseSpeed'),
-    @('HKCU:\Control Panel\Mouse', 'MouseThreshold1'),
-    @('HKCU:\Control Panel\Mouse', 'MouseThreshold2'),
-    @('HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications', 'GlobalUserDisabled'),
-    @('HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects', 'VisualFXSetting'),
+    @('HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl', 'Win32PrioritySeparation'),
+    @('HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\kernel', 'GlobalTimerResolutionRequests'),
+    @('HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers', 'HwSchMode'),
+    @($gcs, 'GameDVR_FSEBehaviorMode'),
+    @($gcs, 'GameDVR_FSEBehavior'),
+    @($gcs, 'GameDVR_HonorUserFSEBehaviorMode'),
+    @($gcs, 'GameDVR_DXGIHonorFSEWindowsCompatible'),
+    @('HKLM:\SOFTWARE\Microsoft\Windows\Dwm', 'OverlayTestMode'),
+    # Power
+    @('HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling', 'PowerThrottlingOff'),
+    # Background
+    @("$cv\BackgroundAccessApplications", 'GlobalUserDisabled'),
+    @("$cv\Explorer\Serialize", 'StartupDelayInMSec'),
+    @('HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting', 'Disabled'),
+    @('HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat', 'DisablePCA'),
+    @('HKLM:\SOFTWARE\Policies\Microsoft\Edge', 'StartupBoostEnabled'),
+    @('HKLM:\SOFTWARE\Policies\Microsoft\Edge', 'BackgroundModeEnabled'),
+    @('HKLM:\SOFTWARE\Policies\Google\Chrome', 'BackgroundModeEnabled'),
+    # Ads & tracking
+    @("$cv\AdvertisingInfo", 'Enabled'),
+    @($cdm, 'SystemPaneSuggestionsEnabled'),
+    @($cdm, 'SilentInstalledAppsEnabled'),
+    @($cdm, 'SoftLandingEnabled'),
+    @($cdm, 'SubscribedContent-338388Enabled'),
+    @($cdm, 'SubscribedContent-338389Enabled'),
+    @($cdm, 'SubscribedContent-353694Enabled'),
+    @($cdm, 'SubscribedContent-353696Enabled'),
+    @("$cv\Privacy", 'TailoredExperiencesWithDiagnosticDataEnabled'),
+    @("$cv\Search", 'BingSearchEnabled'),
+    @("$cv\Search", 'CortanaConsent'),
+    @('HKCU:\Software\Policies\Microsoft\Windows\Explorer', 'DisableSearchBoxSuggestions'),
+    @('HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection', 'AllowTelemetry'),
+    # Visuals
+    @("$cv\Explorer\VisualEffects", 'VisualFXSetting'),
+    @("$cv\Themes\Personalize", 'EnableTransparency'),
+    @('HKCU:\Control Panel\Desktop', 'MenuShowDelay'),
+    # Network
+    @($mm, 'NetworkThrottlingIndex'),
+    # Storage
+    @('HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem', 'NtfsDisableLastAccessUpdate'),
+    # Restore point helper key
     @('HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore', 'SystemRestorePointCreationFrequency')
 )
 

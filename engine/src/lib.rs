@@ -8,11 +8,15 @@ pub mod boost;
 pub mod catalog;
 pub mod cleanup;
 pub mod error;
+pub mod fps;
+pub mod games;
+pub mod monitor;
 pub mod power;
 pub mod restore;
 pub mod scan;
 pub mod score;
 pub mod snapshot;
+pub mod startup;
 pub mod sys;
 pub mod tweak;
 

@@ -1,19 +1,34 @@
 # Raftaar
 
 A safe, honest Windows game optimizer. Every change is snapshotted and can be reverted,
-a System Restore Point is made before the first optimization, and the app shows a
-load score (not invented FPS numbers). English + Urdu.
+a System Restore Point is made before the first optimization, and FPS gains are measured
+with Intel PresentMon instead of being promised. English + Urdu.
 
-Spec and plan: `.overpower/SPEC.md`, `.overpower/plan.md`.
+Plans: `.overpower/SPEC.md`, `.overpower/plan.md` (v0.1), `.overpower/plan-v2.md` (v0.2).
+
+## Features (v0.2)
+
+| Page | What it does |
+|---|---|
+| Home | PC scan and class, load score gauge, one-click optimize with Lite / Balanced / Max presets, live CPU / RAM / GPU monitor |
+| Optimize | 26 tweaks in 7 categories (FPS & input lag, power, background, ads & tracking, visuals, network, storage); search, presets, share codes |
+| Game Boost | Auto-detects Steam, Epic, Riot and Roblox games; while one runs: high priority, 1 ms timer, chosen apps closed and reopened after |
+| FPS Test | Records a game with PresentMon: average FPS, 1% and 0.1% lows, frame-time chart, before/after comparison |
+| Cleanup | Temp, Windows temp, shader caches, crash dumps, error reports, browser caches (skipped while the browser runs) |
+| Startup | Enable/disable startup apps the same way Task Manager does |
+| Safety | Every active change with time and one-click revert, restore points, System Restore |
+
+Never touched: Defender, Windows Update, UAC, firewall, security mitigations, services, drivers.
+A unit test (`catalog::never_touches_forbidden_areas`) enforces this.
 
 ## Layout
 
 | Path | What |
 |---|---|
-| `engine/` | Rust library with all system logic (registry, power plans, restore point, scan, score, Game Boost, cleanup). No UI dependency; reused later as the cafe agent. |
+| `engine/` | Rust library with all system logic. No UI dependency; reused later as the cafe agent. |
 | `engine/src/bin/raftaar-cli.rs` | Debug CLI: `scan`, `score`, `list`, `apply ID`, `revert ID`, `revert-all`, `restore-point` |
-| `src-tauri/` | Thin Tauri command layer (`src/commands.rs`) |
-| `src/` | React UI: Dashboard, Tweaks, Game Boost, Cleanup |
+| `src-tauri/` | Thin Tauri command layer (`src/commands.rs`); PresentMon sidecar in `binaries/` |
+| `src/` | React UI: `pages/`, `components/`, `i18n.tsx` (EN + UR) |
 | `scripts/` | `state-diff.ps1` and `sandbox.wsb` for the end-to-end test |
 
 Rust build output goes to `E:/raftaar-target` (see `.cargo/config.toml`).
@@ -23,7 +38,7 @@ Rust build output goes to `E:/raftaar-target` (see `.cargo/config.toml`).
 ```
 cargo test -p engine      # engine unit tests (mocked registry/shell)
 npm test                  # UI tests (Vitest)
-npm run tauri dev         # dev app (not elevated; HKLM tweaks fail, a banner says so)
+npm run tauri dev         # dev app (not elevated; system tweaks, FPS Test and restore points need admin)
 npm run tauri build       # NSIS installer -> E:/raftaar-target/release/bundle/nsis
 ```
 
@@ -35,3 +50,7 @@ Never test writes on your own PC first. Use Windows Sandbox:
 2. Open `scripts/sandbox.wsb`
 3. In the sandbox: `state-diff.ps1 -Save before.json` → install → Optimize → Revert All →
    `state-diff.ps1 -Compare before.json` must print `0 differences`.
+
+## Third-party
+
+FPS Test bundles Intel PresentMon 2.5.1 (MIT License, signed by Intel Corporation).

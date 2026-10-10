@@ -18,6 +18,13 @@ pub enum Prior {
 pub struct Entry {
     pub tweak_id: String,
     pub prior: Prior,
+    /// Unix seconds. Missing in snapshots written by v0.1.
+    #[serde(default)]
+    pub applied_at: Option<u64>,
+}
+
+pub fn now_unix() -> u64 {
+    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
 }
 
 #[derive(Debug)]

@@ -131,6 +131,20 @@ impl Booster {
     }
 }
 
+/// Asks Windows for a 1 ms timer while a game runs, for smoother frame pacing.
+/// Calls must be paired; the caller tracks on/off so a request is never leaked.
+#[cfg(windows)]
+pub fn high_res_timer(on: bool) {
+    use windows_sys::Win32::Media::{timeBeginPeriod, timeEndPeriod};
+    unsafe {
+        if on {
+            timeBeginPeriod(1);
+        } else {
+            timeEndPeriod(1);
+        }
+    }
+}
+
 /// Real Windows process operations.
 #[cfg(windows)]
 pub struct WinProcessOps;

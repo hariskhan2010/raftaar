@@ -119,7 +119,7 @@ Key check karni ho: `cargo run -p engine --bin raftaar-cli -- license-check RFTP
 
 | Kya | Kahan |
 |---|---|
-| Website | https://hariskhan2010.github.io/raftaar/ |
+| Website | https://raftaar-eight.vercel.app (Vercel) · https://hariskhan2010.github.io/raftaar/ (GitHub Pages) |
 | Download | https://github.com/hariskhan2010/raftaar/releases/latest |
 | Code | https://github.com/hariskhan2010/raftaar |
 | Project folder | `D:\game_booster` |

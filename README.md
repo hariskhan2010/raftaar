@@ -68,7 +68,7 @@ option. The license signing key is `%USERPROFILE%\.tauri\raftaar-license.key`: b
 
 ## Website
 
-`docs/` is the landing page, served by GitHub Pages at https://hariskhan2010.github.io/raftaar/.
+`docs/` is the landing page, served by GitHub Pages at https://hariskhan2010.github.io/raftaar/ and by Vercel at https://raftaar-eight.vercel.app (redeploy: `vercel deploy --prod` inside `docs/`).
 
 ## Releasing an update
 

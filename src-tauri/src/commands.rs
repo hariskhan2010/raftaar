@@ -6,6 +6,8 @@ use engine::catalog::catalog;
 use engine::cleanup::{Category as CleanCategory, CategoryReport};
 use engine::fps::FpsResult;
 use engine::games::Game;
+use engine::license::Status;
+use engine::snapshot::now_unix;
 use engine::monitor::Stats;
 use engine::restore::{RestorePoint, RestoreResult};
 use engine::scan::SystemInfo;
@@ -62,9 +64,19 @@ pub struct TweakView {
     needs_restart: bool,
     recommended_for: Vec<PcClass>,
     preset: Option<Preset>,
+    /// Applying needs Premium. Reverting never does.
+    premium: bool,
     applied: bool,
     applied_at: Option<u64>,
 }
+
+/// The advanced (Max preset) tweaks are Premium; see SPEC.md "Free vs Premium".
+fn is_premium_tweak(t: &engine::tweak::Tweak) -> bool {
+    t.preset == Some(Preset::Max)
+}
+
+/// Error the UI recognises and turns into an upgrade prompt.
+const NEEDS_PREMIUM: &str = "PREMIUM";
 
 #[tauri::command]
 pub fn list_tweaks(state: State<'_, AppState>) -> Vec<TweakView> {
@@ -74,6 +86,7 @@ pub fn list_tweaks(state: State<'_, AppState>) -> Vec<TweakView> {
         .map(|t| {
             let entry = engine.store.get(&t.id);
             TweakView {
+                premium: is_premium_tweak(&t),
                 applied: entry.is_some(),
                 applied_at: entry.and_then(|e| e.applied_at),
                 id: t.id,
@@ -119,9 +132,14 @@ pub async fn apply_tweaks(state: State<'_, AppState>, ids: Vec<String>, skip_res
         restore = Some(r);
     }
 
+    let premium = state.premium();
     let mut engine = state.engine.lock().unwrap();
     let (mut applied, mut failed) = (vec![], vec![]);
     for t in catalog().into_iter().filter(|t| ids.contains(&t.id)) {
+        if is_premium_tweak(&t) && !premium {
+            failed.push((t.id, NEEDS_PREMIUM.into()));
+            continue;
+        }
         match engine.apply(&t) {
             Ok(()) => applied.push(t.id),
             Err(e) => failed.push((t.id, e.0)),
@@ -161,6 +179,10 @@ pub fn boost_get(state: State<'_, AppState>) -> BoostView {
 
 #[tauri::command]
 pub fn boost_set(state: State<'_, AppState>, config: BoostConfig) -> CmdResult<()> {
+    // Editing the game lists is always allowed; switching Boost on needs Premium.
+    if config.enabled && !state.premium() {
+        return Err(NEEDS_PREMIUM.into());
+    }
     if !config.enabled {
         state.booster.lock().unwrap().stop(&WinProcessOps).map_err(|e| e.0)?;
     }
@@ -273,6 +295,9 @@ pub async fn fps_record(app: AppHandle, game: String, seconds: u32, label: Strin
         return Err("The FPS Test needs Raftaar to run as administrator.".into());
     }
     let state = app.state::<AppState>();
+    if !state.premium() {
+        return Err(NEEDS_PREMIUM.into());
+    }
     if state.fps_busy.swap(true, Ordering::SeqCst) {
         return Err("An FPS test is already running.".into());
     }
@@ -319,4 +344,43 @@ pub async fn create_restore_point() -> CmdResult<RestoreResult> {
 #[tauri::command]
 pub fn open_system_restore() -> CmdResult<()> {
     std::process::Command::new("rstrui.exe").spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
+#[derive(Serialize)]
+pub struct LicenseView {
+    status: Status,
+    /// Whether card-payment (Lemon Squeezy) keys can be activated in this build.
+    card_keys: bool,
+}
+
+fn license_view(state: &AppState) -> LicenseView {
+    LicenseView {
+        status: state.licensing.lock().unwrap().status(now_unix()),
+        card_keys: crate::LEMON_SQUEEZY_STORE_ID.is_some(),
+    }
+}
+
+#[tauri::command]
+pub fn license_status(state: State<'_, AppState>) -> LicenseView {
+    license_view(&state)
+}
+
+#[tauri::command]
+pub async fn license_activate(app: AppHandle, key: String) -> CmdResult<LicenseView> {
+    blocking(move || {
+        let state = app.state::<AppState>();
+        state.licensing.lock().unwrap().activate(&key, &crate::HTTP, now_unix()).map_err(|e| e.0)?;
+        Ok(license_view(&state))
+    })
+    .await?
+}
+
+#[tauri::command]
+pub async fn license_remove(app: AppHandle) -> CmdResult<LicenseView> {
+    blocking(move || {
+        let state = app.state::<AppState>();
+        state.licensing.lock().unwrap().remove(&crate::HTTP).map_err(|e| e.0)?;
+        Ok(license_view(&state))
+    })
+    .await?
 }

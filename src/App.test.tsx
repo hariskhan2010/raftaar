@@ -21,6 +21,7 @@ const tweak = (id: string, over: Partial<TweakView> = {}): TweakView => ({
   needs_restart: false,
   recommended_for: ['Low', 'Mid', 'High'],
   preset: 'Lite',
+  premium: false,
   applied: false,
   applied_at: null,
   ...over,
@@ -76,6 +77,7 @@ beforeEach(() => {
     startup_list: () => [{ name: 'Discord', command: 'discord.exe', source: 'UserRun', enabled: true }],
     startup_set: () => undefined,
     restore_points: () => [],
+    license_status: () => ({ status: { kind: 'Trial', days_left: 5 }, card_keys: false }),
   }
   invoke.mockReset()
   invoke.mockImplementation(async (cmd: string, args?: Record<string, unknown>) => {
@@ -85,7 +87,9 @@ beforeEach(() => {
   })
 })
 
-const nav = (name: string) => userEvent.click(screen.getByRole('button', { name }))
+// Sidebar buttons can carry a count or trial pill after the label ("Optimize 7").
+const nav = (name: string) =>
+  userEvent.click(within(screen.getByRole('navigation', { name: 'Main' })).getByRole('button', { name: new RegExp(`^${name}`) }))
 
 async function clickOptimize() {
   const btn = await screen.findByRole('button', { name: /Optimize now/ })
@@ -252,6 +256,79 @@ describe('Settings', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Check for updates' }))
     expect(await screen.findByText(/Couldn't check for updates/)).toBeInTheDocument()
     expect(screen.queryByText('Raftaar is up to date.')).not.toBeInTheDocument()
+  })
+})
+
+describe('Premium', () => {
+  const free = () => ({ status: { kind: 'Free', expired: null }, card_keys: false })
+
+  it('trial users see days left in the sidebar', async () => {
+    render(<App />)
+    expect(await screen.findByText('Trial · 5d')).toBeInTheDocument()
+  })
+
+  it('free users are sent to Premium instead of switching Game Boost on', async () => {
+    handlers.license_status = free
+    render(<App />)
+    await nav('Game Boost')
+    expect(await screen.findByText('This is a Premium feature.')).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('switch', { name: 'Game Boost' }))
+    expect(invoke).not.toHaveBeenCalledWith('boost_set', expect.anything())
+    expect(await screen.findByRole('heading', { name: 'Raftaar Premium' })).toBeInTheDocument()
+  })
+
+  it('free users can still add games without turning Boost on', async () => {
+    handlers.license_status = free
+    render(<App />)
+    await nav('Game Boost')
+    await userEvent.click(await screen.findByRole('button', { name: 'Boost this' }))
+    expect(invoke).toHaveBeenCalledWith('boost_set', { config: { enabled: false, games: ['cs2.exe'], close_apps: [] } })
+  })
+
+  it('premium tweaks are locked for free users, but reverting one is always allowed', async () => {
+    handlers.license_status = free
+    tweaks = [tweak('hags_on', { premium: true, preset: 'Max' }), tweak('fso', { premium: true, preset: 'Max', applied: true })]
+    render(<App />)
+    await nav('Optimize')
+    await userEvent.click(await screen.findByRole('switch', { name: 'hags_on en' }))
+    expect(invoke).not.toHaveBeenCalledWith('apply_tweaks', expect.anything())
+    await nav('Optimize')
+    await userEvent.click(await screen.findByRole('switch', { name: 'fso en' }))
+    expect(invoke).toHaveBeenCalledWith('revert_tweak', { id: 'fso' })
+  })
+
+  it('a pasted key is activated and the page shows who it is licensed to', async () => {
+    handlers.license_status = free
+    handlers.license_activate = () => ({
+      status: { kind: 'Premium', license: { name: 'Ali', plan: 'Lifetime', expires: null, source: 'Raftaar' } },
+      card_keys: false,
+    })
+    render(<App />)
+    await nav('Premium')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Paste your license key' }), 'RFTP-abc.def')
+    await userEvent.click(screen.getByRole('button', { name: 'Activate' }))
+    expect(invoke).toHaveBeenCalledWith('license_activate', { key: 'RFTP-abc.def' })
+    expect(await screen.findByText('Premium is active')).toBeInTheDocument()
+    expect(screen.getByText(/Licensed to Ali/)).toBeInTheDocument()
+  })
+
+  it('a rejected key shows the reason', async () => {
+    handlers.license_status = free
+    handlers.license_activate = () => {
+      throw 'invalid key'
+    }
+    render(<App />)
+    await nav('Premium')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Paste your license key' }), 'nope')
+    await userEvent.click(screen.getByRole('button', { name: 'Activate' }))
+    expect(await screen.findByText('invalid key')).toBeInTheDocument()
+  })
+
+  it('a premium failure from the backend reads as a sentence, not a code', async () => {
+    handlers.apply_tweaks = (a) => ({ restore: null, applied: [], failed: (a!.ids as string[]).map((id) => [id, 'PREMIUM']) })
+    render(<App />)
+    await clickOptimize()
+    expect(await screen.findAllByText('This is a Premium feature.')).not.toHaveLength(0)
   })
 })
 

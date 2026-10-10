@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { Check, Plus, RefreshCw, X, Zap } from 'lucide-react'
 import { api, type BoostConfig, type BoostState, type Game } from '../api'
 import { errText, useT } from '../i18n'
-import { useApp } from '../store'
-import { Banner, PageHead, Toggle } from '../components/ui'
+import { failText, useApp } from '../store'
+import { Banner, PageHead, PremiumNote, Toggle } from '../components/ui'
 
 function normalizeExe(raw: string): string {
   let name = raw.trim().toLowerCase().split(/[\\/]/).pop() ?? ''
@@ -13,7 +13,7 @@ function normalizeExe(raw: string): string {
 
 export function Boost() {
   const { t } = useT()
-  const { toast } = useApp()
+  const { toast, premium, go } = useApp()
   const [config, setConfig] = useState<BoostConfig | null>(null)
   const [state, setState] = useState<BoostState | null>(null)
   const [games, setGames] = useState<Game[] | null>(null)
@@ -45,16 +45,25 @@ export function Boost() {
     try {
       await api.boostSet(next)
     } catch (e) {
-      toast(errText(e))
+      toast(failText(errText(e), t))
       load()
     }
+  }
+
+  const toggleBoost = () => {
+    if (!config.enabled && !premium) {
+      go('premium')
+      return
+    }
+    save({ ...config, enabled: !config.enabled })
   }
 
   const toggleGame = (exe: string) => {
     const has = config.games.includes(exe)
     const nextGames = has ? config.games.filter((g) => g !== exe) : [...config.games, exe]
-    // Adding a first game is a clear sign the user wants Boost on.
-    save({ ...config, games: nextGames, enabled: config.enabled || (!has && config.games.length === 0) })
+    // Adding a first game is a clear sign the user wants Boost on (if they can have it).
+    const turnOn = premium && !has && config.games.length === 0
+    save({ ...config, games: nextGames, enabled: config.enabled || turnOn })
   }
 
   const manualGames = config.games.filter((g) => !games?.some((x) => x.exe === g))
@@ -63,8 +72,9 @@ export function Boost() {
     <>
       <PageHead title={t.boostTitle} sub={t.boostSub}>
         <span className="muted">{config.enabled ? t.boostEnabled : t.boostDisabled}</span>
-        <Toggle on={config.enabled} label={t.nav.boost} onChange={() => save({ ...config, enabled: !config.enabled })} />
+        <Toggle on={config.enabled} label={t.nav.boost} onChange={toggleBoost} />
       </PageHead>
+      <PremiumNote />
 
       {state?.game_name && (
         <Banner kind="ok">

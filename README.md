@@ -49,6 +49,27 @@ English, Urdu, Hindi, Arabic, Spanish, Portuguese (BR) and Turkish. UI strings l
 English and Urdu in `engine/src/catalog.rs`, the rest in `src/i18n/tweaks.ts`; a Rust test
 fails if a tweak is missing from any language. First run picks the Windows display language.
 
+## Free and Premium
+
+Free: every safe tweak (Lite and Balanced presets), Revert All, restore points, Safety center,
+Cleanup, Startup manager, live monitor. Premium (7-day trial on first run): Game Boost, FPS Test,
+and the 4 Max-preset tweaks. Reverting is never locked. The backend enforces this
+(`src-tauri/src/commands.rs`), not just the UI.
+
+Selling keys (owner):
+
+| Customer pays with | What happens |
+|---|---|
+| JazzCash / Easypaisa | They message you on WhatsApp; run `cargo run -p engine --bin raftaar-cli -- license-new "<name or phone>" 30` (or `365`, or `lifetime`) and send them the `RFTP-…` key. Keys are Ed25519-signed and checked offline. |
+| Card (worldwide) | Lemon Squeezy emails the key. Set `LEMON_SQUEEZY_STORE_ID` in `src-tauri/src/lib.rs` and `checkoutUrl` in `src/config.ts`, then release. Keys are checked online, with 14 days offline grace. |
+
+Payment numbers, WhatsApp, prices and the checkout link live in `src/config.ts`; empty values hide that
+option. The license signing key is `%USERPROFILE%\.tauri\raftaar-license.key`: back it up, never share it.
+
+## Website
+
+`docs/` is the landing page, served by GitHub Pages at https://hariskhan2010.github.io/raftaar/.
+
 ## Releasing an update
 
 Installed copies check `https://github.com/hariskhan2010/raftaar/releases/latest/download/latest.json`

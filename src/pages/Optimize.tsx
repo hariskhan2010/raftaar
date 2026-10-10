@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Copy, Download, Search } from 'lucide-react'
+import { Copy, Crown, Download, Search } from 'lucide-react'
 import { api, decodeShareCode, encodeShareCode, type Category, type Preset, type TweakView } from '../api'
 import { errText, tweakDesc, tweakName, useT } from '../i18n'
-import { useApp } from '../store'
+import { failText, useApp } from '../store'
 import { CATEGORY_ICON } from '../components/icons'
 import { PageHead, Toggle } from '../components/ui'
 
@@ -10,7 +10,7 @@ const ORDER: Category[] = ['Fps', 'Power', 'Background', 'Privacy', 'Visuals', '
 
 export function Optimize() {
   const { t, lang } = useT()
-  const { tweaks, info, apply, refreshTweaks, toast } = useApp()
+  const { tweaks, info, apply, refreshTweaks, toast, premium, go } = useApp()
   const [cat, setCat] = useState<Category | 'all'>('all')
   const [q, setQ] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
@@ -29,6 +29,12 @@ export function Optimize() {
   }, [tweaks, cat, q, lang])
 
   const toggle = async (tw: TweakView) => {
+    // Reverting is always free; only switching a Premium tweak on is locked.
+    if (!tw.applied && tw.premium && !premium) {
+      toast(t.premiumNeeded)
+      go('premium')
+      return
+    }
     setBusy(tw.id)
     try {
       if (tw.applied) {
@@ -36,7 +42,7 @@ export function Optimize() {
         await refreshTweaks()
       } else {
         const res = await apply([tw.id])
-        if (res?.failed.length) toast(res.failed[0][1])
+        if (res?.failed.length) toast(failText(res.failed[0][1], t))
       }
     } catch (e) {
       toast(errText(e))
@@ -170,6 +176,12 @@ export function Optimize() {
                       info && tw.recommended_for.includes(info.class) && <span className="badge accent">{t.recommended}</span>
                     )}
                     {tw.preset && <span className="badge">{t.presets[tw.preset]}</span>}
+                    {tw.premium && (
+                      <span className="badge accent">
+                        <Crown size={11} />
+                        {t.navPremium}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <Toggle on={tw.applied} label={name(tw)} disabled={busy !== null} onChange={() => toggle(tw)} />

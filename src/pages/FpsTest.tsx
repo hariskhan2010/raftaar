@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Play, Trash2 } from 'lucide-react'
 import { api, type FpsRecord } from '../api'
 import { errText, formatDate, useT } from '../i18n'
-import { useApp } from '../store'
-import { Banner, FrameChart, PageHead } from '../components/ui'
+import { failText, useApp } from '../store'
+import { Banner, FrameChart, PageHead, PremiumNote } from '../components/ui'
 
 const DURATIONS = [15, 30, 60]
 const COUNTDOWN = 10
@@ -16,7 +16,7 @@ function pct(a: number, b: number): string {
 
 export function FpsTest() {
   const { t, lang } = useT()
-  const { toast, admin } = useApp()
+  const { toast, admin, premium } = useApp()
   const [options, setOptions] = useState<{ games: string[]; running: string[] }>({ games: [], running: [] })
   const [game, setGame] = useState('')
   const [seconds, setSeconds] = useState(30)
@@ -71,7 +71,7 @@ export function FpsTest() {
       setHistory((h) => [rec, ...h])
       setPicked([rec.id])
     } catch (e) {
-      setError(errText(e))
+      setError(failText(errText(e), t))
     } finally {
       clearInterval(timer.current!)
       setPhase('idle')
@@ -107,6 +107,7 @@ export function FpsTest() {
   return (
     <>
       <PageHead title={t.fpsTitle} sub={t.fpsSub} />
+      <PremiumNote />
       {error && <Banner kind="error">{error}</Banner>}
 
       <section className="card stack">
@@ -166,7 +167,7 @@ export function FpsTest() {
             <p className="muted small" style={{ maxWidth: 560 }}>
               {t.fpsHowTo}
             </p>
-            <button className="btn primary" onClick={start} disabled={!game || !admin}>
+            <button className="btn primary" onClick={start} disabled={!game || !admin || !premium}>
               <Play size={16} />
               {t.fpsStart}
             </button>

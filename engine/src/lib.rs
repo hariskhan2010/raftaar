@@ -10,6 +10,7 @@ pub mod cleanup;
 pub mod error;
 pub mod fps;
 pub mod games;
+pub mod license;
 pub mod monitor;
 pub mod power;
 pub mod restore;

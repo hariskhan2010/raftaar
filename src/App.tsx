@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { listen } from '@tauri-apps/api/event'
 import {
   Activity,
+  Crown,
   Gamepad2,
   Gauge as GaugeIcon,
   Home as HomeIcon,
@@ -13,7 +14,7 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react'
-import { api, type ApplyResult, type RestoreResult, type SystemInfo, type TweakView } from './api'
+import { api, type ApplyResult, type LicenseView, type RestoreResult, type SystemInfo, type TweakView } from './api'
 import { LangContext, detectLang, errText, isRtl, strings, type Lang } from './i18n'
 import { UpdateBanner } from './components/UpdateBanner'
 import { AppContext, type Page } from './store'
@@ -27,6 +28,7 @@ import { Cleanup } from './pages/Cleanup'
 import { Startup } from './pages/Startup'
 import { Safety } from './pages/Safety'
 import { Settings } from './pages/Settings'
+import { Premium } from './pages/Premium'
 
 type BoostEvent = { type: 'Started' | 'Ended'; game: string; closed?: number; reopened?: number }
 
@@ -48,6 +50,7 @@ const NAV: { id: Page; icon: typeof HomeIcon }[] = [
   { id: 'cleanup', icon: Sparkles },
   { id: 'startup', icon: Power },
   { id: 'safety', icon: ShieldCheck },
+  { id: 'premium', icon: Crown },
   { id: 'settings', icon: SettingsIcon },
 ]
 
@@ -59,6 +62,7 @@ export default function App() {
   const [info, setInfo] = useState<SystemInfo | null>(null)
   const [admin, setAdmin] = useState(true)
   const [boosting, setBoosting] = useState<string | null>(null)
+  const [license, setLicense] = useState<LicenseView | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [restore, setRestore] = useState<RestoreResult | null>(null)
   const restoreAnswer = useRef<(c: RestoreChoice) => void>(() => {})
@@ -89,6 +93,12 @@ export default function App() {
     api.isAdmin().then(setAdmin, () => {})
     api.scan().then(setInfo, (e) => setToast(errText(e)))
     api.boostGet().then((b) => setBoosting(b.state.game_name), () => {})
+    api.licenseStatus().then(setLicense, () => {})
+    // The backend re-checks card licenses daily and tells us when the result may have changed.
+    const un = listen('license-changed', () => api.licenseStatus().then(setLicense, () => {}))
+    return () => {
+      un.then((f) => f(), () => {})
+    }
   }, [refreshTweaks])
 
   useEffect(() => {
@@ -155,11 +165,13 @@ export default function App() {
   }, [])
 
   const appliedCount = tweaks.filter((tw) => tw.applied).length
+  const status = license?.status
+  const premium = status?.kind === 'Trial' || status?.kind === 'Premium'
 
   return (
     <LangContext.Provider value={{ lang, t, setLang }}>
       <AppContext.Provider
-        value={{ info, tweaks, admin, boosting, refreshTweaks, apply, toast: setToast, go }}
+        value={{ info, tweaks, admin, boosting, license, setLicense, premium, refreshTweaks, apply, toast: setToast, go }}
       >
         <div className="shell">
           <TitleBar />
@@ -182,8 +194,11 @@ export default function App() {
                   onClick={() => go(id)}
                 >
                   <Icon size={18} />
-                  <span>{t.nav[id]}</span>
+                  <span>{id === 'premium' ? t.navPremium : t.nav[id]}</span>
                   {id === 'optimize' && appliedCount > 0 && <span className="nav-pill">{appliedCount}</span>}
+                  {id === 'premium' && status?.kind === 'Trial' && (
+                    <span className="nav-pill live">{t.trialChip(status.days_left)}</span>
+                  )}
                   {id === 'boost' && boosting && (
                     <span className="nav-pill live">
                       <Activity size={11} />
@@ -218,6 +233,7 @@ export default function App() {
               {page === 'cleanup' && <Cleanup />}
               {page === 'startup' && <Startup />}
               {page === 'safety' && <Safety />}
+              {page === 'premium' && <Premium />}
               {page === 'settings' && <Settings />}
             </div>
           </main>

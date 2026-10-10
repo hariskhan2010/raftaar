@@ -1,5 +1,25 @@
 import type { ReactNode } from 'react'
-import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Crown, Info, XCircle } from 'lucide-react'
+import { useT } from '../i18n'
+import { useApp } from '../store'
+
+/** Shown on Premium features when the user has neither a trial nor a license. */
+export function PremiumNote() {
+  const { t } = useT()
+  const { premium, go } = useApp()
+  if (premium) return null
+  return (
+    <div className="banner info">
+      <Crown size={16} />
+      <div className="row between" style={{ flex: 1 }}>
+        <span>{t.premiumNeeded}</span>
+        <button className="btn sm primary" onClick={() => go('premium')}>
+          {t.upgrade}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export function Toggle({
   on,

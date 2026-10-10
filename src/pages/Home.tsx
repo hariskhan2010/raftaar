@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Activity, Cpu, Gamepad2, Rocket, Zap } from 'lucide-react'
 import { api, type ApplyResult, type FpsRecord, type Preset, type Score, type Stats } from '../api'
 import { errText, tweakName, useT } from '../i18n'
-import { useApp } from '../store'
+import { failText, useApp } from '../store'
 import { Banner, Gauge, Meter, PageHead } from '../components/ui'
 
 const PRESETS: Preset[] = ['Lite', 'Balanced', 'Max']
@@ -164,7 +164,7 @@ export function Home() {
                   <ul style={{ margin: '4px 0 0', paddingInlineStart: 18 }}>
                     {result.failed.map(([id, msg]) => (
                       <li key={id}>
-                        {name(id)}: <span className="ltr">{msg}</span>
+                        {name(id)}: <span className="ltr">{failText(msg, t)}</span>
                       </li>
                     ))}
                   </ul>

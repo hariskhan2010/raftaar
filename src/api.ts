@@ -44,6 +44,7 @@ export interface TweakView {
   needs_restart: boolean
   recommended_for: PcClass[]
   preset: Preset | null
+  premium: boolean
   applied: boolean
   applied_at: number | null
 }
@@ -131,6 +132,26 @@ export interface RestorePoint {
   Created: string
 }
 
+export interface License {
+  name: string
+  plan: 'Monthly' | 'Yearly' | 'Lifetime' | null
+  expires: number | null
+  source: 'Raftaar' | 'LemonSqueezy'
+}
+
+export type LicenseStatus =
+  | { kind: 'Trial'; days_left: number }
+  | { kind: 'Premium'; license: License }
+  | { kind: 'Free'; expired: License | null }
+
+export interface LicenseView {
+  status: LicenseStatus
+  card_keys: boolean
+}
+
+/** Error string the backend returns when a Premium feature is used without Premium. */
+export const NEEDS_PREMIUM = 'PREMIUM'
+
 export const api = {
   isAdmin: () => invoke<boolean>('is_admin'),
   scan: () => invoke<SystemInfo>('system_scan'),
@@ -158,6 +179,9 @@ export const api = {
   restorePoints: () => invoke<RestorePoint[]>('restore_points'),
   createRestorePoint: () => invoke<RestoreResult>('create_restore_point'),
   openSystemRestore: () => invoke<void>('open_system_restore'),
+  licenseStatus: () => invoke<LicenseView>('license_status'),
+  licenseActivate: (key: string) => invoke<LicenseView>('license_activate', { key }),
+  licenseRemove: () => invoke<LicenseView>('license_remove'),
 }
 
 export function formatBytes(n: number): string {

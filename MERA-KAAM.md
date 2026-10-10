@@ -100,7 +100,7 @@ Key check karni ho: `cargo run -p engine --bin raftaar-cli -- license-check RFTP
 1. `package.json` aur `src-tauri\tauri.conf.json` mein `version` barhayein (jaise 0.4.0 → 0.4.1).
 2. `D:\game_booster` mein: `.\scripts\release.ps1 -Notes "Kya badla"`
 3. https://github.com/hariskhan2010/raftaar/releases/new pe naya release `v0.4.1` banayein aur
-   script ki batayi hui **dono** files upload karein (`Raftaar_..._x64-setup.exe` aur `latest.json`).
+   script ki batayi hui **teeno** files upload karein (`Raftaar_..._x64-setup.exe`, `Raftaar-Setup.exe` aur `latest.json`). `Raftaar-Setup.exe` zaroori hai: website ka Download button isi ko seedha download karta hai.
 4. Sab users ko agli baar app kholne pe "Update now" dikhega.
 
 ---

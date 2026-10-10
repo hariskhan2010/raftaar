@@ -5,7 +5,7 @@
 .DESCRIPTION
   1. Bump "version" in src-tauri/tauri.conf.json (and package.json) first.
   2. Run:  .\scripts\release.ps1 -Notes "What changed"
-  3. Upload BOTH files it prints to a GitHub release tagged v<version> on
+  3. Upload ALL THREE files it prints to a GitHub release tagged v<version> on
      github.com/hariskhan2010/raftaar. Mark it "latest". Installed copies of
      Raftaar find the update on their next start.
 
@@ -59,6 +59,13 @@ $json = Join-Path $nsis 'latest.json'
 # No BOM: Windows PowerShell's "utf8" adds one, and the updater's JSON parser rejects it.
 [IO.File]::WriteAllText($json, ($manifest | ConvertTo-Json -Depth 5), (New-Object System.Text.UTF8Encoding $false))
 
-Write-Output "Release v$version ready. Upload these two files to the GitHub release v${version}:"
+# Same installer under a fixed name: the website's Download button points at
+# releases/latest/download/Raftaar-Setup.exe, so it always gets the newest version.
+$fixed = Join-Path $nsis 'Raftaar-Setup.exe'
+Copy-Item $setup $fixed -Force
+
+Write-Output "Release v$version ready. Upload these three files to the GitHub release v${version}:"
 Write-Output "  $setup"
+Write-Output "  $fixed"
 Write-Output "  $json"
+Write-Output "Or in one go: gh release create v$version `"$setup`" `"$fixed`" `"$json`" --title `"Raftaar $version`" --notes `"...`" --latest"

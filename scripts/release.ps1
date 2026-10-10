@@ -59,13 +59,16 @@ $json = Join-Path $nsis 'latest.json'
 # No BOM: Windows PowerShell's "utf8" adds one, and the updater's JSON parser rejects it.
 [IO.File]::WriteAllText($json, ($manifest | ConvertTo-Json -Depth 5), (New-Object System.Text.UTF8Encoding $false))
 
-# Same installer under a fixed name: the website's Download button points at
-# releases/latest/download/Raftaar-Setup.exe, so it always gets the newest version.
+# Same installer under a fixed name. The website's Download button serves
+# docs/Raftaar-Setup.exe from Vercel (raftaar-eight.vercel.app/Raftaar-Setup.exe),
+# so copy it there too; it is git-ignored and deployed with `vercel deploy --prod`.
 $fixed = Join-Path $nsis 'Raftaar-Setup.exe'
 Copy-Item $setup $fixed -Force
+Copy-Item $setup (Join-Path $root 'docs\Raftaar-Setup.exe') -Force
 
 Write-Output "Release v$version ready. Upload these three files to the GitHub release v${version}:"
 Write-Output "  $setup"
 Write-Output "  $fixed"
 Write-Output "  $json"
 Write-Output "Or in one go: gh release create v$version `"$setup`" `"$fixed`" `"$json`" --title `"Raftaar $version`" --notes `"...`" --latest"
+Write-Output "Then update the website's download: cd docs; vercel deploy --prod"

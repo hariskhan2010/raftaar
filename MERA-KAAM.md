@@ -101,7 +101,8 @@ Key check karni ho: `cargo run -p engine --bin raftaar-cli -- license-check RFTP
 2. `D:\game_booster` mein: `.\scripts\release.ps1 -Notes "Kya badla"`
 3. https://github.com/hariskhan2010/raftaar/releases/new pe naya release `v0.4.1` banayein aur
    script ki batayi hui **teeno** files upload karein (`Raftaar_..._x64-setup.exe`, `Raftaar-Setup.exe` aur `latest.json`). `Raftaar-Setup.exe` zaroori hai: website ka Download button isi ko seedha download karta hai.
-4. Sab users ko agli baar app kholne pe "Update now" dikhega.
+4. Website ka download naya karein: `cd docs` phir `vercel deploy --prod` (script installer ko `docs` mein copy kar deta hai).
+5. Sab users ko agli baar app kholne pe "Update now" dikhega.
 
 ---
 
